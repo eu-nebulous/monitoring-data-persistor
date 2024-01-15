@@ -49,11 +49,11 @@ class InfluxDBConnector:
 
         self.write_api.write(bucket=self.bucket_name, org=Constants.organization_name, record=data, write_precision=WritePrecision.S)
 
-    def get_data(self):
+    def get_data(self,metric_name):
         query_api = self.client.query_api()
-        query = """from(bucket: "nebulous")
+        query = f"""from(bucket: "nebulous")
          |> range(start: -1m)
-         |> filter(fn: (r) => r._measurement == "temperature")"""
+         |> filter(fn: (r) => r._measurement == "{metric_name}")"""
         tables = query_api.query(query, org=Constants.organization_name)
 
         for table in tables:

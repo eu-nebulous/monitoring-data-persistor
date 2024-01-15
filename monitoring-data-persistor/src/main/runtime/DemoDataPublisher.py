@@ -3,13 +3,7 @@ import threading
 import time,random
 import traceback
 
-from influxdb_client import Point, WritePrecision, InfluxDBClient
-from influxdb_client.client.write_api import SYNCHRONOUS
-
-from Constants import Constants
-from InfluxDBConnector import InfluxDBConnector
 from exn import connector, core
-from datetime import datetime
 
 
 class Bootstrap(connector.connector_handler.ConnectorHandler):
@@ -17,7 +11,7 @@ class Bootstrap(connector.connector_handler.ConnectorHandler):
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.getLogger('main.exn.connector').setLevel(logging.DEBUG)
+logging.getLogger('exn.connector').setLevel(logging.DEBUG)
 
 application_name = "_Application1"
 metric_list = ["cpu_usage","ram_usage"]

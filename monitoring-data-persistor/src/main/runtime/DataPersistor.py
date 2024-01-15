@@ -1,12 +1,9 @@
 import logging
-import os
 import sys
 import threading
-import time
 from jproperties import Properties
 
-from influxdb_client import Point, WritePrecision, InfluxDBClient
-from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client import Point, WritePrecision
 
 import exn
 from Constants import Constants
@@ -86,4 +83,3 @@ if __name__ == "__main__":
     thread.start()
 
     print("Waiting for messages at the metric list topic, in order to start receiving applications")
-
