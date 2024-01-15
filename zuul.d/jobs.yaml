@@ -8,15 +8,15 @@
       - nebulous-monitoring-data-persistor-container-images
     description: Build the container images.
     files: &image_files
-      - ^java-spring-boot-demo/
+      - ^monitoring-data-persistor/
     vars: &image_vars
       promote_container_image_job: nebulous-monitoring-data-persistor-upload-container-images
       container_images:
-        - context: java-spring-boot-demo
+        - context: monitoring-data-persistor
           registry: quay.io
-          repository: quay.io/nebulous/monitoring-data-persistor-java-spring-boot-demo
+          repository: quay.io/nebulous/monitoring-data-persistor-monitoring-data-persistor
           namespace: nebulous
-          repo_shortname: monitoring-data-persistor-java-spring-boot-demo
+          repo_shortname: monitoring-data-persistor-monitoring-data-persistor
           repo_description: ""
 
 - job:
@@ -44,7 +44,7 @@
     description: Run Hadolint on Dockerfile(s).
     vars:
       dockerfiles:
-        - java-spring-boot-demo/Dockerfile
+        - monitoring-data-persistor/Dockerfile
 
 - job:
     name: nebulous-monitoring-data-persistor-helm-lint
