@@ -1,13 +1,14 @@
 import logging
 import threading
 import time,random
+import traceback
 
 from influxdb_client import Point, WritePrecision, InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 from Constants import Constants
 from InfluxDBConnector import InfluxDBConnector
-from main.exn import connector, core
+from exn import connector, core
 from datetime import datetime
 
 
@@ -18,12 +19,12 @@ class Bootstrap(connector.connector_handler.ConnectorHandler):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.getLogger('main.exn.connector').setLevel(logging.DEBUG)
 
-
+application_name = "_Application1"
 metric_list = ["cpu_usage","ram_usage"]
 publisher_dict = {}
 publisher_list = []
 for metric in metric_list:
-    new_publisher = (core.publisher.Publisher("slovid","monitoring."+metric,topic=True))
+    new_publisher = (core.publisher.Publisher("demopublisher_"+metric,"eu.nebulouscloud.monitoring."+metric,topic=True,fqdn=True))
     publisher_dict[metric]= new_publisher
     publisher_list.append(new_publisher)
 
@@ -55,8 +56,11 @@ for metric_name in metric_list:
             "component_id":"wordpress_1",
             "timestamp": time_point
         }
-        publisher_dict[metric_name].send(body=message)
-        if counter%50==0:
-            print("Sending message "+str(counter))
-        counter = counter +1
+        try:
+            publisher_dict[metric_name].send(body=message,application=application_name)
+            if counter%50==0:
+                print("Sending message "+str(counter))
+            counter = counter +1
+        except Exception as e:
+            print(traceback.format_exc())
 

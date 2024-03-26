@@ -3,8 +3,8 @@ import os
 
 from proton.reactor import Container
 
-from main.exn.core import state_publisher, schedule_publisher
-from main.exn.core.context import Context
+from exn.core import state_publisher, schedule_publisher
+from exn.core.context import Context
 from .core.manager import Manager
 from .settings import base
 from .handler import connector_handler

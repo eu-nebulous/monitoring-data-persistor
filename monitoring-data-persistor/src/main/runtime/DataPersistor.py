@@ -8,48 +8,73 @@ from jproperties import Properties
 from influxdb_client import Point, WritePrecision, InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
+import exn
 from Constants import Constants
 from InfluxDBConnector import InfluxDBConnector
-from main.exn import connector, core
-from main.exn.handler.connector_handler import ConnectorHandler
+from exn import connector, core
+from exn.core.handler import Handler
+from exn.handler.connector_handler import ConnectorHandler
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.getLogger('main.exn.connector').setLevel(logging.DEBUG)
 
 
 class Bootstrap(ConnectorHandler):
-
+    pass
+class ConsumerHandler(Handler):
     influx_connector = InfluxDBConnector()
+    application_name = ""
+    def __init__(self,application_name):
+        self.application_name = application_name
     def on_message(self, key, address, body, context, **kwargs):
         logging.info(f"Received {key} => {address}")
-        application_name = "default_application"
-        if (str(address)).startswith(Constants.monitoring_prefix):
+        if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
-            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("component_id",body["component_id"]).tag("application_name",application_name)
+            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("component_id",body["component_id"]).tag("application_name",self.application_name)
             point.time(body["timestamp"],write_precision=WritePrecision.S)
-            self.influx_connector.write_data(point)
-        else:
-            print("Address is "+str(address)+", but it was expected for it to start with " + Constants.monitoring_prefix)
+            self.influx_connector.write_data(point,self.application_name)
 
+class GenericConsumerHandler(Handler):
+
+    def on_message(self, key, address, body, context, **kwargs):
+
+        if (str(address)).startswith(Constants.monitoring_prefix+Constants.metric_list_topic):
+            application_name = body["name"]
+            logging.info("New metrics list message for application "+application_name)
+            connector = exn.connector.EXN('slovid', handler=Bootstrap(),
+                                      consumers=[
+                                          core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.>', application=application_name,topic=True, fqdn=True, handler=ConsumerHandler(application_name=application_name)),
+                                      ],
+                                      url=Constants.broker_ip,
+                                      port=Constants.broker_port,
+                                      username=Constants.broker_username,
+                                      password=Constants.broker_password
+                                      )
+            #connector.start()
+            thread = threading.Thread(target=connector.start,args=())
+            thread.start()
 
 def update_properties(configuration_file_location):
     p = Properties()
-    with open(Constants.configuration_file_location, "rb") as f:
+    with open(configuration_file_location, "rb") as f:
         p.load(f, "utf-8")
         Constants.broker_ip, metadata = p["broker_ip"]
         Constants.broker_port, metadata = p["broker_port"]
         Constants.broker_username, metadata = p["broker_username"]
         Constants.broker_password, metadata = p["broker_password"]
         Constants.monitoring_broker_topic, metadata = p["monitoring_broker_topic"]
+        Constants.organization_name,metadata = p["organization_name"]
+        Constants.bucket_name,metadata = p["bucket_name"]
 
 if __name__ == "__main__":
     Constants.configuration_file_location = sys.argv[1]
     update_properties(Constants.configuration_file_location)
-    application_handler = Bootstrap()
-    connector = connector.EXN('slovid', handler=application_handler,
+    component_handler = Bootstrap()
+
+    connector = connector.EXN('slovid', handler=component_handler,
                               consumers=[
-                                  core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.>', topic=True, handler=application_handler),
+                                  core.consumer.Consumer('data_persistor_application', Constants.monitoring_broker_topic + '.>', topic=True, fqdn=True, handler=GenericConsumerHandler()),
                               ],
                               url=Constants.broker_ip,
                               port=Constants.broker_port,
@@ -59,4 +84,6 @@ if __name__ == "__main__":
     #connector.start()
     thread = threading.Thread(target=connector.start,args=())
     thread.start()
+
+    print("Waiting for messages at the metric list topic, in order to start receiving applications")
 

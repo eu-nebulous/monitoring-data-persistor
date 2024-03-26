@@ -14,9 +14,9 @@
       container_images:
         - context: monitoring-data-persistor
           registry: quay.io
-          repository: quay.io/nebulous/monitoring-data-persistor-monitoring-data-persistor
+          repository: quay.io/nebulous/monitoring-data-persistor
           namespace: nebulous
-          repo_shortname: monitoring-data-persistor-monitoring-data-persistor
+          repo_shortname: monitoring-data-persistor
           repo_description: ""
 
 - job:
