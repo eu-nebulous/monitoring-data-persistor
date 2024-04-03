@@ -5,7 +5,6 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from Constants import Constants
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-
 def create_influxdb_bucket(application_name):
     bucket_name = Constants.application_name_prefix+application_name+"_bucket"
 
