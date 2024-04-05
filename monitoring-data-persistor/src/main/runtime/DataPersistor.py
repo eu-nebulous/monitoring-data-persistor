@@ -28,20 +28,23 @@ class ConsumerHandler(Handler):
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
-            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("component_id",body["component_id"]).tag("application_name",self.application_name)
-            point.time(body["timestamp"],write_precision=WritePrecision.S)
+            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+            point.time(body["timestamp"],write_precision=WritePrecision.MS)
+            logging.info("Writing new monitoring data to Influx DB")
             self.influx_connector.write_data(point,self.application_name)
 
 class GenericConsumerHandler(Handler):
-
+    application_consumer_handler_connectors = {} #dictionary in which keys are applications and values are the consumer handlers.
     def on_message(self, key, address, body, context, **kwargs):
 
         if (str(address)).startswith(Constants.monitoring_prefix+Constants.metric_list_topic):
             application_name = body["name"]
-            logging.info("New metrics list message for application "+application_name)
-            connector = exn.connector.EXN('slovid', handler=Bootstrap(),
+            logging.info("New metrics list message for application "+application_name + " - registering new connector")
+            if (application_name in self.application_consumer_handler_connectors.keys()  is not None):
+                self.application_consumer_handler_connectors[application_name].stop()
+            connector = exn.connector.EXN('data_persistor-'+application_name, handler=Bootstrap(),
                                       consumers=[
-                                          core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.>', application=application_name,topic=True, fqdn=True, handler=ConsumerHandler(application_name=application_name)),
+                                          core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.realtime.>', application=application_name,topic=True, fqdn=True, handler=ConsumerHandler(application_name=application_name)),
                                       ],
                                       url=Constants.broker_ip,
                                       port=Constants.broker_port,
@@ -49,13 +52,18 @@ class GenericConsumerHandler(Handler):
                                       password=Constants.broker_password
                                       )
             #connector.start()
+            self.application_consumer_handler_connectors[application_name] = connector
+            logging.info(f"Application specific connector registered for application {application_name}")
             thread = threading.Thread(target=connector.start,args=())
             thread.start()
+            from time import sleep
+            sleep(10000)
 
 def update_properties(configuration_file_location):
     p = Properties()
     with open(configuration_file_location, "rb") as f:
         p.load(f, "utf-8")
+        Constants.db_hostname, metadata = p["db_hostname"]
         Constants.broker_ip, metadata = p["broker_ip"]
         Constants.broker_port, metadata = p["broker_port"]
         Constants.broker_username, metadata = p["broker_username"]

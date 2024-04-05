@@ -1,4 +1,4 @@
-import json
+import json,logging
 
 import requests
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -33,20 +33,35 @@ def create_influxdb_bucket(application_name):
 
 
 class InfluxDBConnector:
-
+    applications_with_influxdb_bucket_created  = []
     def __init__(self):
         self.client = InfluxDBClient(url="http://"+Constants.db_hostname+":"+Constants.db_port, token=Constants.db_token, org=Constants.organization_name)
         self.write_api = self.client.write_api(write_options=SYNCHRONOUS)
-        self.influxdb_bucket_created = False
+        #self.influxdb_bucket_created[application_name] = False
         self.bucket_name = "demo_bucket"
     def InfluxDBConnector(self):
         pass
     def write_data(self,data,application_name):
-        if not self.influxdb_bucket_created:
-            self.bucket_name = create_influxdb_bucket(application_name)
-            self.influxdb_bucket_created = True
+        if not application_name in self.applications_with_influxdb_bucket_created:
+            org_api = self.client.organizations_api()
+            # List all organizations
+            organizations = org_api.find_organizations()
 
+            # Find the organization by name and print its ID
+            for org in organizations:
+                if org.name == Constants.organization_name:
+                    logging.info(f"Organization Name: {org.name}, ID: {org.id}")
+                    Constants.organization_id = org.id
+                    break
+
+            logging.info("The influxdb bucket was reported as not created")
+            self.bucket_name = create_influxdb_bucket(application_name)
+            self.applications_with_influxdb_bucket_created.append(application_name)
+        else:
+            logging.info("The influxdb bucket was reported as created")
+        logging.info(f"The data point is {data}")
         self.write_api.write(bucket=self.bucket_name, org=Constants.organization_name, record=data, write_precision=WritePrecision.S)
+        logging.info("The data point has been written!")
 
     def get_data(self,metric_name):
         query_api = self.client.query_api()

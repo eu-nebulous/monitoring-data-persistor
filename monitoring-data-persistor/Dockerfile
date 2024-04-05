@@ -1,41 +1,50 @@
-# Use python:3.11 as the source stage to build the package
-FROM python:3.11 as source
+# First stage: Build the application
+FROM python:3.11 as builder
 
-# Create and set the working directory
-RUN mkdir /src
-COPY ./src/ /src/
+# Set the working directory in the container
 WORKDIR /src
 
-# Install dependencies and package the application
-RUN pip install --no-cache-dir -r requirements.txt && python3 setup.py sdist
+# Copy the source code into the container
+COPY ./src/ .
 
-# Start the final stage using Ubuntu as the base image
-FROM ubuntu:noble
+# Install dependencies and build the application package
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python setup.py sdist
 
-# Set the environment variables
-ENV TZ=Europe/Athens
-ENV VERSION=1.0.0
-ENV LOG_FILE=/home/monitoring_data_persistor.log
+# Second stage: Prepare the runtime environment
+FROM python:3.11-slim
+
+# Set environment variables
+ENV TZ=Europe/Athens \
+    VERSION=1.0.0 \
+    LOG_FILE=/home/monitoring_data_persistor.log
 
 # Set the timezone
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# Install the required packages
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    python3 \
-    python3-venv \
-    python3-pip \
+# Install gcc and other necessary build tools for compiling C extensions
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libffi-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the packaged application from the source stage
-COPY --from=source /src/dist/monitoring-data-persistor-$VERSION.tar.gz /home/
-
-# Set the working directory
+# Set the working directory in the container
 WORKDIR /home
 
-# Create a virtual environment and install the application package
-RUN python3 -m venv monitoring-data-env \
-    && . monitoring-data-env/bin/activate \
-    && pip install --no-cache-dir monitoring-data-persistor-$VERSION.tar.gz
+# Copy the built application package and other necessary files from the builder stage
+COPY --from=builder /src/dist/monitoring-data-persistor-$VERSION.tar.gz ./
+COPY --from=builder /src/resources ./resources
+COPY --from=builder /src/requirements.txt .
 
-CMD ["/bin/bash", "-c", "source monitoring-data-env/bin/activate && python3 -u /home/monitoring-data-persistor-$VERSION/src/main/runtime/DataPersistor.py /home/monitoring-data-persistor-$VERSION/src/resources/config.properties > $LOG_FILE 2>&1"]
+# Install the application
+# Optionally, cleanup to reduce image size
+# This step removes the build tools and libraries after they are no longer needed
+# Cleanup the tar.gz file
+RUN pip install --no-cache-dir monitoring-data-persistor-$VERSION.tar.gz && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y --auto-remove gcc g++ make libffi-dev libssl-dev && \
+    rm monitoring-data-persistor-$VERSION.tar.gz
+
+# Define the entry point command
+CMD ["/bin/bash", "-c", "source /home/monitoring-data-env/bin/activate && python3 -u /home/main/runtime/DataPersistor.py /home/resources/config.properties > $LOG_FILE 2>&1"]

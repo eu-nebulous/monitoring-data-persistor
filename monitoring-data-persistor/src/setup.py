@@ -9,7 +9,7 @@ setup(
 package_dir={'': '.'},
     entry_points={
         'console_scripts': [
-            'start_exsmoothing = main.runtime:DataPersistor',
+            'start_dp = main.runtime:DataPersistor',
         ],
     }
     # other setup configurations
