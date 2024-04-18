@@ -1,4 +1,5 @@
 class Constants:
+    data_persistor_name = "data_persistor"
     application_name_prefix = "nebulous_"
     start_forecasting_prefix = "topic://eu.nebulouscloud.forecasting.start_forecasting."
     forecasting_method_name = "exponentialsmoothing"

@@ -6,8 +6,8 @@ from jproperties import Properties
 from influxdb_client import Point, WritePrecision
 
 import exn
-from Constants import Constants
-from InfluxDBConnector import InfluxDBConnector
+from main.runtime.Constants import Constants
+from main.runtime.InfluxDBConnector import InfluxDBConnector
 from exn import connector, core
 from exn.core.handler import Handler
 from exn.handler.connector_handler import ConnectorHandler
@@ -34,7 +34,13 @@ class ConsumerHandler(Handler):
             self.influx_connector.write_data(point,self.application_name)
 
 class GenericConsumerHandler(Handler):
+    connector_thread = None
+    initialized_connector = None
     application_consumer_handler_connectors = {} #dictionary in which keys are applications and values are the consumer handlers.
+
+    def GenericConsumerHandler(self):
+        if self.connector_thread is not None:
+            self.initialized_connector.stop()
     def on_message(self, key, address, body, context, **kwargs):
 
         if (str(address)).startswith(Constants.monitoring_prefix+Constants.metric_list_topic):
@@ -42,22 +48,24 @@ class GenericConsumerHandler(Handler):
             logging.info("New metrics list message for application "+application_name + " - registering new connector")
             if (application_name in self.application_consumer_handler_connectors.keys()  is not None):
                 self.application_consumer_handler_connectors[application_name].stop()
-            connector = exn.connector.EXN('data_persistor-'+application_name, handler=Bootstrap(),
-                                      consumers=[
+            self.initialized_connector = exn.connector.EXN(Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
+                                                           consumers=[
                                           core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.realtime.>', application=application_name,topic=True, fqdn=True, handler=ConsumerHandler(application_name=application_name)),
                                       ],
-                                      url=Constants.broker_ip,
-                                      port=Constants.broker_port,
-                                      username=Constants.broker_username,
-                                      password=Constants.broker_password
-                                      )
+                                                           url=Constants.broker_ip,
+                                                           port=Constants.broker_port,
+                                                           username=Constants.broker_username,
+                                                           password=Constants.broker_password
+                                                           )
             #connector.start()
-            self.application_consumer_handler_connectors[application_name] = connector
+            self.application_consumer_handler_connectors[application_name] = self.initialized_connector
             logging.info(f"Application specific connector registered for application {application_name}")
-            thread = threading.Thread(target=connector.start,args=())
-            thread.start()
-            from time import sleep
-            sleep(10000)
+            self.initialized_connector.start()
+            logging.info(f"Application specific connector started for application {application_name}")
+        #If threading support is explicitly required, uncomment these lines
+            #connector_thread = threading.Thread(target=self.initialized_connector.start,args=())
+            #connector_thread.start()
+            #connector_thread.join()
 
 def update_properties(configuration_file_location):
     p = Properties()
@@ -72,22 +80,25 @@ def update_properties(configuration_file_location):
         Constants.organization_name,metadata = p["organization_name"]
         Constants.bucket_name,metadata = p["bucket_name"]
 
-if __name__ == "__main__":
+def main():
     Constants.configuration_file_location = sys.argv[1]
     update_properties(Constants.configuration_file_location)
     component_handler = Bootstrap()
 
-    connector = connector.EXN('slovid', handler=component_handler,
-                              consumers=[
-                                  core.consumer.Consumer('data_persistor_application', Constants.monitoring_broker_topic + '.>', topic=True, fqdn=True, handler=GenericConsumerHandler()),
+    connector_instance = connector.EXN(Constants.data_persistor_name, handler=component_handler,
+                                       consumers=[
+                                  core.consumer.Consumer('monitoring_data', Constants.monitoring_broker_topic + '.>', topic=True, fqdn=True, handler=GenericConsumerHandler()),
                               ],
-                              url=Constants.broker_ip,
-                              port=Constants.broker_port,
-                              username=Constants.broker_username,
-                              password=Constants.broker_password
-                              )
+                                       url=Constants.broker_ip,
+                                       port=Constants.broker_port,
+                                       username=Constants.broker_username,
+                                       password=Constants.broker_password
+                                       )
     #connector.start()
-    thread = threading.Thread(target=connector.start,args=())
+    thread = threading.Thread(target=connector_instance.start,args=())
     thread.start()
 
     print("Waiting for messages at the metric list topic, in order to start receiving applications")
+
+if __name__ == "__main__":
+    main()

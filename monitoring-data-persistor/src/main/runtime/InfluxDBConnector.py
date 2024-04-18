@@ -2,7 +2,7 @@ import json,logging
 
 import requests
 from influxdb_client import InfluxDBClient, Point, WritePrecision
-from Constants import Constants
+from main.runtime.Constants import Constants
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 def create_influxdb_bucket(application_name):

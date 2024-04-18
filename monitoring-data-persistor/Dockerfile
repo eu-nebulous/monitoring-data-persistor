@@ -47,4 +47,5 @@ RUN pip install --no-cache-dir monitoring-data-persistor-$VERSION.tar.gz && \
     rm monitoring-data-persistor-$VERSION.tar.gz
 
 # Define the entry point command
-CMD ["/bin/bash", "-c", "source /home/monitoring-data-env/bin/activate && python3 -u /home/main/runtime/DataPersistor.py /home/resources/config.properties > $LOG_FILE 2>&1"]
+# CMD ["/bin/bash", "-c", "source /home/monitoring-data-env/bin/activate && python3 -u /home/main/runtime/DataPersistor.py /home/resources/config.properties > $LOG_FILE 2>&1"]
+CMD ["/usr/local/bin/start_dp","/home/resources/config.properties","> $LOG_FILE 2>&1"]
