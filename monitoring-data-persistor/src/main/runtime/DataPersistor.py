@@ -19,17 +19,18 @@ logging.getLogger('main.exn.connector').setLevel(logging.DEBUG)
 class Bootstrap(ConnectorHandler):
     pass
 class ConsumerHandler(Handler):
-    influx_connector = InfluxDBConnector()
+    influx_connector = None
     application_name = ""
     def __init__(self,application_name):
         self.application_name = application_name
+        self.influx_connector = InfluxDBConnector()
     def on_message(self, key, address, body, context, **kwargs):
         logging.info(f"Received {key} => {address}")
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
             point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
-            point.time(body["timestamp"],write_precision=WritePrecision.MS)
+            point.time(body["timestamp"],write_precision=WritePrecision.S)
             logging.info("Writing new monitoring data to Influx DB")
             self.influx_connector.write_data(point,self.application_name)
 

@@ -27,8 +27,8 @@ def create_influxdb_bucket(application_name):
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    print(response.status_code)
-    print(response.json())
+    logging.info("The response code for our attempt in trying to create the bucket is "+str(response.status_code))
+    logging.info("The response json for our attempt in trying to create the bucket is "+str(response.json()))
     return bucket_name
 
 
