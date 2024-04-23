@@ -47,16 +47,28 @@ class GenericConsumerHandler(Handler):
             application_name = body["name"]
             logging.info("New metrics list message for application "+application_name + " - registering new connector")
             if (application_name in self.application_consumer_handler_connectors.keys()  is not None):
+                logging.info("Stopping the old existing connector...")
                 self.application_consumer_handler_connectors[application_name].stop()
-            self.initialized_connector = exn.connector.EXN(Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
-                                                           consumers=[
-                                          core.consumer.Consumer('monitoring', Constants.monitoring_broker_topic + '.realtime.>', application=application_name,topic=True, fqdn=True, handler=ConsumerHandler(application_name=application_name)),
-                                      ],
-                                                           url=Constants.broker_ip,
-                                                           port=Constants.broker_port,
-                                                           username=Constants.broker_username,
-                                                           password=Constants.broker_password
-                                                           )
+            logging.info("Attempting to register new connector...")
+            from time import sleep
+            sleep(10)
+            self.initialized_connector = exn.connector.EXN(
+                Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
+                consumers=[
+                    core.consumer.Consumer('monitoring',
+                        Constants.monitoring_broker_topic + '.realtime.>',
+                        application=application_name,
+                        topic=True,
+                        fqdn=True,
+                        handler=ConsumerHandler(application_name=application_name)
+                    ),
+                ],
+                url=Constants.broker_ip,
+                port=Constants.broker_port,
+                username=Constants.broker_username,
+                password=Constants.broker_password
+            )
+            logging.info("Connector ready to be registered")
             #connector.start()
             self.application_consumer_handler_connectors[application_name] = self.initialized_connector
             logging.info(f"Application specific connector registered for application {application_name}")

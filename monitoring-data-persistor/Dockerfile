@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 # Second stage: Prepare the runtime environment
 FROM python:3.11-slim
+# python:latest should work as well
 
 # Set environment variables
 ENV TZ=Europe/Athens \

@@ -39,9 +39,9 @@ class Context:
 
     def stop(self):
         if self._manager is not None and self._manager.started:
-            for key,publisher in self.publishers:
+            for key,publisher in self.publishers.items():
                 publisher._link.close()
-            for key,consumer in self.consumers:
+            for key,consumer in self.consumers.items():
                 consumer._link.close()
 
             self._manager.close()
