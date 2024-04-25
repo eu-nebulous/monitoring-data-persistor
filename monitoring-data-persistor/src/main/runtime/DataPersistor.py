@@ -51,8 +51,6 @@ class GenericConsumerHandler(Handler):
                 logging.info("Stopping the old existing connector...")
                 self.application_consumer_handler_connectors[application_name].stop()
             logging.info("Attempting to register new connector...")
-            from time import sleep
-            sleep(10)
             self.initialized_connector = exn.connector.EXN(
                 Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
                 consumers=[
@@ -84,14 +82,16 @@ def update_properties(configuration_file_location):
     p = Properties()
     with open(configuration_file_location, "rb") as f:
         p.load(f, "utf-8")
-        Constants.db_hostname, metadata = p["db_hostname"]
         Constants.broker_ip, metadata = p["broker_ip"]
         Constants.broker_port, metadata = p["broker_port"]
         Constants.broker_username, metadata = p["broker_username"]
         Constants.broker_password, metadata = p["broker_password"]
         Constants.monitoring_broker_topic, metadata = p["monitoring_broker_topic"]
-        Constants.organization_name,metadata = p["organization_name"]
-        Constants.bucket_name,metadata = p["bucket_name"]
+        Constants.influxdb_hostname, metadata = p["influxdb_hostname"]
+        Constants.influxdb_password, metadata = p["influxdb_password"]
+        Constants.influxdb_username, metadata = p["influxdb_username"]
+        Constants.influxdb_token, metadata = p["influxdb_token"]
+        Constants.influxdb_organization_name,metadata = p["influxdb_organization_name"]
 
 def main():
     Constants.configuration_file_location = sys.argv[1]

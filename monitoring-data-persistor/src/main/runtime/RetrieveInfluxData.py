@@ -4,17 +4,17 @@ from InfluxDBConnector import InfluxDBConnector
 import time
 
 ## This utility assumes that the database has been filled with values for cpu usage and ram usage
-
+influxdb_bucket = "nebulous__Application1_bucket"
 metric_names = ["cpu_usage","ram_usage"]
 for metric_name in metric_names:
     time_interval_to_get_data_for = "10h"
     print_data_from_db = True
-    query_string = 'from(bucket: "'+Constants.bucket_name+'")  |> range(start:-'+time_interval_to_get_data_for+')  |> filter(fn: (r) => r["_measurement"] == "'+metric_name+'")'
+    query_string = 'from(bucket: "' + influxdb_bucket + '")  |> range(start:-' + time_interval_to_get_data_for + ')  |> filter(fn: (r) => r["_measurement"] == "' + metric_name + '")'
     influx_connector = InfluxDBConnector()
     for counter in range(10):
         print("performing query")
         current_time = time.time()
-        result = influx_connector.client.query_api().query(query_string, Constants.organization_name)
+        result = influx_connector.client.query_api().query(query_string, Constants.influxdb_organization_name)
         elapsed_time = time.time()-current_time
         print("performed query, it took "+str(elapsed_time) + " seconds")
         #print(result.to_values())
