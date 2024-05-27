@@ -8,6 +8,7 @@
       - nebulous-monitoring-data-persistor-container-images
     description: Build the container images.
     files: &image_files
+      - ^zuul\.d/jobs\.yaml$
       - ^monitoring-data-persistor/
     vars: &image_vars
       promote_container_image_job: nebulous-monitoring-data-persistor-upload-container-images
