@@ -30,7 +30,7 @@ class ConsumerHandler(Handler):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
             point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
-            point.time(body["timestamp"],write_precision=WritePrecision.S)
+            point.time(body["timestamp"],write_precision=WritePrecision.MS)
             logging.info("Writing new monitoring data to Influx DB")
             self.influx_connector.write_data(point,self.application_name)
 
