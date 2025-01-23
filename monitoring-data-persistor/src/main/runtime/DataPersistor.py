@@ -32,10 +32,16 @@ class ConsumerHandler(Handler):
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
-            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
-            point.time(body["timestamp"],write_precision=WritePrecision.MS)
-            logging.info("Writing new monitoring data to Influx DB")
-            self.influx_connector.write_data(point,self.application_name)
+            if ((str(address).split(".")[-2]) == "realtime"):
+                point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+                point.time(body["timestamp"],write_precision=WritePrecision.MS)
+                logging.info("Writing new real-time monitoring data to Influx DB")
+                self.influx_connector.write_data(point,self.application_name)
+            elif ((str(address).split(".")[-2]) == "predicted"):
+                point = Point("_predicted_"+str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+                point.time(body["timestamp"],write_precision=WritePrecision.MS)
+                logging.info("Writing new predicted monitoring data to Influx DB")
+                self.influx_connector.write_data(point,self.application_name)
 
 class GenericConsumerHandler(Handler):
     connector_thread = None
@@ -82,6 +88,13 @@ class GenericConsumerHandler(Handler):
                                                    fqdn=True,
                                                    handler=ConsumerHandler(application_name=application_name)
                                                    ),
+                            core.consumer.Consumer('monitoring-'+application_name,
+                                                   Constants.monitoring_broker_topic + '.predicted.>',
+                                                   application="",
+                                                   topic=True,
+                                                   fqdn=True,
+                                                   handler=ConsumerHandler(application_name=application_name)
+                                                   )
                         ],
                         url=Constants.broker_ip,
                         port=Constants.broker_port,
