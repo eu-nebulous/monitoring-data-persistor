@@ -38,7 +38,7 @@ class ConsumerHandler(Handler):
                 logging.info("Writing new real-time monitoring data to Influx DB")
                 self.influx_connector.write_data(point,self.application_name)
             elif ((str(address).split(".")[-2]) == "predicted"):
-                point = Point("_predicted_"+str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+                point = Point("_predicted_"+str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("probability",body["probability"]).tag("predictionTime",body["predictionTime"]).tag("confidence_interval",body["confidence_interval"]).tag("application_name",self.application_name)
                 point.time(body["timestamp"],write_precision=WritePrecision.MS)
                 logging.info("Writing new predicted monitoring data to Influx DB")
                 self.influx_connector.write_data(point,self.application_name)
