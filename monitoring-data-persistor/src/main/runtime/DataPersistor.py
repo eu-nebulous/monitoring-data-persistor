@@ -81,16 +81,16 @@ class GenericConsumerHandler(Handler):
                     self.application_consumer_handler_connectors[application_name] = exn.connector.EXN(
                         Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
                         consumers=[
-                            core.consumer.Consumer('monitoring-'+application_name,
+                            core.consumer.Consumer('monitoring-data-persistor-realtime'+application_name,
                                                    Constants.monitoring_broker_topic + '.realtime.>',
                                                    application=application_name,
                                                    topic=True,
                                                    fqdn=True,
                                                    handler=ConsumerHandler(application_name=application_name)
                                                    ),
-                            core.consumer.Consumer('monitoring-'+application_name,
+                            core.consumer.Consumer('monitoring-data-persistor-predicted'+application_name,
                                                    Constants.monitoring_broker_topic + '.predicted.>',
-                                                   application="",
+                                                   application=application_name,
                                                    topic=True,
                                                    fqdn=True,
                                                    handler=ConsumerHandler(application_name=application_name)
