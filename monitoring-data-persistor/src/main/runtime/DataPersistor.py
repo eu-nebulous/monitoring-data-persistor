@@ -78,6 +78,8 @@ class GenericConsumerHandler(Handler):
                     if (application_name in self.application_consumer_handler_connectors.keys()):
                         self.application_consumer_handler_connectors[application_name].stop()
                     logging.info("Attempting to register new connector...")
+                    application_handler = ConsumerHandler(application_name=application_name)
+                    
                     self.application_consumer_handler_connectors[application_name] = exn.connector.EXN(
                         Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
                         consumers=[
@@ -86,14 +88,13 @@ class GenericConsumerHandler(Handler):
                                                    application=application_name,
                                                    topic=True,
                                                    fqdn=True,
-                                                   handler=ConsumerHandler(application_name=application_name)
-                                                   ),
+                                                   handler=application_handler),
                             core.consumer.Consumer('monitoring-data-persistor-predicted'+application_name,
                                                    Constants.monitoring_broker_topic + '.predicted.>',
                                                    application=application_name,
                                                    topic=True,
                                                    fqdn=True,
-                                                   handler=ConsumerHandler(application_name=application_name)
+                                                   handler=application_handler
                                                    )
                         ],
                         url=Constants.broker_ip,
