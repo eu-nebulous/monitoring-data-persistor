@@ -32,10 +32,16 @@ class ConsumerHandler(Handler):
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
-            point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
-            point.time(body["timestamp"],write_precision=WritePrecision.MS)
-            logging.info("Writing new monitoring data to Influx DB")
-            self.influx_connector.write_data(point,self.application_name)
+            if ((str(address).split(".")[-2]) == "realtime"):
+                point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+                point.time(body["timestamp"],write_precision=WritePrecision.MS)
+                logging.info("Writing new real-time monitoring data to Influx DB")
+                self.influx_connector.write_data(point,self.application_name)
+            elif ((str(address).split(".")[-2]) == "predicted"):
+                point = Point("_predicted_"+str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("probability",body["probability"]).tag("predictionTime",body["predictionTime"]).tag("confidence_interval",body["confidence_interval"]).tag("application_name",self.application_name)
+                point.time(body["timestamp"],write_precision=WritePrecision.MS)
+                logging.info("Writing new predicted monitoring data to Influx DB")
+                self.influx_connector.write_data(point,self.application_name)
 
 class GenericConsumerHandler(Handler):
     connector_thread = None
@@ -72,16 +78,24 @@ class GenericConsumerHandler(Handler):
                     if (application_name in self.application_consumer_handler_connectors.keys()):
                         self.application_consumer_handler_connectors[application_name].stop()
                     logging.info("Attempting to register new connector...")
+                    application_handler = ConsumerHandler(application_name=application_name)
+                    
                     self.application_consumer_handler_connectors[application_name] = exn.connector.EXN(
                         Constants.data_persistor_name + "-" + application_name, handler=Bootstrap(),
                         consumers=[
-                            core.consumer.Consumer('monitoring-'+application_name,
+                            core.consumer.Consumer('monitoring-data-persistor-realtime'+application_name,
                                                    Constants.monitoring_broker_topic + '.realtime.>',
                                                    application=application_name,
                                                    topic=True,
                                                    fqdn=True,
-                                                   handler=ConsumerHandler(application_name=application_name)
-                                                   ),
+                                                   handler=application_handler),
+                            core.consumer.Consumer('monitoring-data-persistor-predicted'+application_name,
+                                                   Constants.monitoring_broker_topic + '.predicted.>',
+                                                   application=application_name,
+                                                   topic=True,
+                                                   fqdn=True,
+                                                   handler=application_handler
+                                                   )
                         ],
                         url=Constants.broker_ip,
                         port=Constants.broker_port,
