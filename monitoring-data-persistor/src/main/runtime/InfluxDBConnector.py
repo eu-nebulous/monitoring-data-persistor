@@ -95,7 +95,7 @@ class InfluxDBConnector:
             logging.info("The influxdb bucket was reported as created")
         logging.info(f"The data point is {data}")
         self.write_api.write(bucket=self.bucket_name, org=Constants.influxdb_organization_name, record=data, write_precision=WritePrecision.S)
-        logging.info("The data point has been written!")
+        logging.info(f"The data point has been written to bucket {str(self.bucket_name)}!")
 
     def get_data(self,metric_name):
         query_api = self.client.query_api()
