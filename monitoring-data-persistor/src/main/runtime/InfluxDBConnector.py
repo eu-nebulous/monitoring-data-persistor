@@ -97,7 +97,7 @@ class InfluxDBConnector:
             #print(self.bucket_name)
             self.applications_with_influxdb_bucket_created.append(application_name)
         else:
-            print("application name in applications created")
+            #print("application name in applications created")
             #self.bucket_name = get_influxdb_bucket(application_name)            
             logging.info("The influxdb bucket was reported as created")
         logging.info(f"The data point is {data}")
