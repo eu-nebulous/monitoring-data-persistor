@@ -45,7 +45,6 @@ def get_influxdb_bucket(application_name):
     return bucket_name
 
 
-    # Replace with your actual values
     #url = 'http://' + Constants.influxdb_hostname + ':8086/api/v2/buckets'
     #token = Constants.influxdb_token
     #headers = {
