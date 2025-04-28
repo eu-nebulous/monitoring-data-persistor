@@ -68,7 +68,6 @@ def get_influxdb_bucket(application_name):
     #logging.info("The response json for our attempt in trying to create the bucket is "+str(response.json()))
     #return bucket_name
 
-
 class InfluxDBConnector:
     applications_with_influxdb_bucket_created  = []
     def __init__(self):
