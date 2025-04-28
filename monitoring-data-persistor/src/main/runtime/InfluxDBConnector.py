@@ -44,7 +44,6 @@ def get_influxdb_bucket(application_name):
         logging.info("The response for creating a new bucket is "+str(response.status_code))
     return bucket_name
 
-
     #url = 'http://' + Constants.influxdb_hostname + ':8086/api/v2/buckets'
     #token = Constants.influxdb_token
     #headers = {
