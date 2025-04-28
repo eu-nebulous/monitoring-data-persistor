@@ -31,17 +31,20 @@ def get_influxdb_bucket(application_name):
     response = requests.get(list_bucket_url, headers=headers)
 
     logging.info("The response for listing a possibly existing bucket is "+str(response.status_code)+" for application "+application_name)
+    logging.debug (response.json())
+    logging.debug(response.status_code)
     if ((response.status_code==200) and ("buckets" in response.json()) and (len(response.json()["buckets"])>0)):
         logging.info("The bucket already existed for the particular application, skipping its creation...")
+        #print("Bucket existed")
     else:
         logging.info("The response in the request to list a bucket is "+str(response.json()))
         logging.info("The bucket did not exist for the particular application, creation in process...")
+        #print("Bucket did not exist")
         response = requests.post(create_bucket_url, headers=headers, data=json.dumps(data))
         logging.info("The response for creating a new bucket is "+str(response.status_code))
     return bucket_name
 
 
-    # Replace with your actual values
     #url = 'http://' + Constants.influxdb_hostname + ':8086/api/v2/buckets'
     #token = Constants.influxdb_token
     #headers = {
@@ -76,6 +79,7 @@ class InfluxDBConnector:
         pass
     def write_data(self,data,application_name):
         if not application_name in self.applications_with_influxdb_bucket_created:
+            #print("inside if application name not in applications created")
             org_api = self.client.organizations_api()
             # List all organizations
             organizations = org_api.find_organizations()
@@ -89,12 +93,16 @@ class InfluxDBConnector:
 
             logging.info("Retrieving the influxdb bucket relevant for the application name (perhaps it is not created yet)")
             self.bucket_name = get_influxdb_bucket(application_name)
+            #print(self.bucket_name)
             self.applications_with_influxdb_bucket_created.append(application_name)
         else:
+            #print("application name in applications created")
             #self.bucket_name = get_influxdb_bucket(application_name)            
             logging.info("The influxdb bucket was reported as created")
         logging.info(f"The data point is {data}")
         self.write_api.write(bucket=self.bucket_name, org=Constants.influxdb_organization_name, record=data, write_precision=WritePrecision.S)
+        #print(f"The data point is {data}")
+        #print(f"data is written to {self.bucket_name}")
         logging.info(f"The data point has been written to bucket {str(self.bucket_name)}!")
 
     def get_data(self,metric_name):
