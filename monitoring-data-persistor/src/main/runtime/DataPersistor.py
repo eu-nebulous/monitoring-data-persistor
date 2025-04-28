@@ -24,9 +24,11 @@ class Bootstrap(ConnectorHandler):
 class ConsumerHandler(Handler):
     influx_connector = None
     application_name = ""
+    
     def __init__(self,application_name):
         self.application_name = application_name
         self.influx_connector = InfluxDBConnector()
+        
     def on_message(self, key, address, body, context, **kwargs):
         logging.info(f"Received {key} => {address}")
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
