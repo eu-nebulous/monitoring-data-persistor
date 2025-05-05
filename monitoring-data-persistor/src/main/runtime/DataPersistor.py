@@ -2,7 +2,7 @@ import logging
 import sys
 import threading
 from time import sleep
-
+import os
 from jproperties import Properties
 
 from influxdb_client import Point, WritePrecision
@@ -127,24 +127,39 @@ class GenericConsumerHandler(Handler):
                     sleep(5)
 
 
-def update_properties(configuration_file_location):
+def load_properties(configuration_file_location):
     p = Properties()
     with open(configuration_file_location, "rb") as f:
         p.load(f, "utf-8")
-        Constants.broker_ip, metadata = p["broker_ip"]
-        Constants.broker_port, metadata = p["broker_port"]
-        Constants.broker_username, metadata = p["broker_username"]
-        Constants.broker_password, metadata = p["broker_password"]
-        Constants.monitoring_broker_topic, metadata = p["monitoring_broker_topic"]
-        Constants.influxdb_hostname, metadata = p["influxdb_hostname"]
-        Constants.influxdb_password, metadata = p["influxdb_password"]
-        Constants.influxdb_username, metadata = p["influxdb_username"]
-        Constants.influxdb_token, metadata = p["influxdb_token"]
-        Constants.influxdb_organization_name,metadata = p["influxdb_organization_name"]
+
+        def get_config_value(key):
+            """
+            Retrieves a configuration value, prioritizing environment variables over configuration file values.
+            """
+            if os.getenv(key.upper()) is not None:
+                return os.getenv(key.upper())
+            elif os.getenv(key) is not None:
+                return os.getenv(key)
+            elif key in p:
+                return key[p]
+            else:
+                raise Exception(f"Configuration value for {key} not found.")
+
+
+        Constants.broker_ip, metadata = get_config_value("broker_ip")
+        Constants.broker_port, metadata = get_config_value("broker_port")
+        Constants.broker_username, metadata = get_config_value("broker_username")
+        Constants.broker_password, metadata = get_config_value("broker_password")
+        Constants.monitoring_broker_topic, metadata = get_config_value("monitoring_broker_topic")
+        Constants.influxdb_hostname, metadata = get_config_value("influxdb_hostname")
+        Constants.influxdb_password, metadata = get_config_value("influxdb_password")
+        Constants.influxdb_username, metadata = get_config_value("influxdb_username")
+        Constants.influxdb_token, metadata = get_config_value("influxdb_token")
+        Constants.influxdb_organization_name,metadata = get_config_value("influxdb_organization_name")
 
 def main():
     Constants.configuration_file_location = sys.argv[1]
-    update_properties(Constants.configuration_file_location)
+    load_properties(Constants.configuration_file_location)
     component_handler = Bootstrap()
 
     connector_instance = connector.EXN(Constants.data_persistor_name, handler=component_handler,
