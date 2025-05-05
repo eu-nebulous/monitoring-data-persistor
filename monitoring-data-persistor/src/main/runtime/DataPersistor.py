@@ -140,22 +140,22 @@ def load_properties(configuration_file_location):
                 return os.getenv(key.upper())
             elif os.getenv(key) is not None:
                 return os.getenv(key)
-            elif key in p:
-                return key[p]
+            elif p.get(key) is not None:
+                return p.get(key).data
             else:
                 raise Exception(f"Configuration value for {key} not found.")
 
 
-        Constants.broker_ip, metadata = get_config_value("broker_ip")
-        Constants.broker_port, metadata = get_config_value("broker_port")
-        Constants.broker_username, metadata = get_config_value("broker_username")
-        Constants.broker_password, metadata = get_config_value("broker_password")
-        Constants.monitoring_broker_topic, metadata = get_config_value("monitoring_broker_topic")
-        Constants.influxdb_hostname, metadata = get_config_value("influxdb_hostname")
-        Constants.influxdb_password, metadata = get_config_value("influxdb_password")
-        Constants.influxdb_username, metadata = get_config_value("influxdb_username")
-        Constants.influxdb_token, metadata = get_config_value("influxdb_token")
-        Constants.influxdb_organization_name,metadata = get_config_value("influxdb_organization_name")
+        Constants.broker_ip = get_config_value("broker_ip")
+        Constants.broker_port = get_config_value("broker_port")
+        Constants.broker_username = get_config_value("broker_username")
+        Constants.broker_password = get_config_value("broker_password")
+        Constants.monitoring_broker_topic = get_config_value("monitoring_broker_topic")
+        Constants.influxdb_hostname = get_config_value("influxdb_hostname")
+        Constants.influxdb_password = get_config_value("influxdb_password")
+        Constants.influxdb_username = get_config_value("influxdb_username")
+        Constants.influxdb_token = get_config_value("influxdb_token")
+        Constants.influxdb_organization_name = get_config_value("influxdb_organization_name")
 
 def main():
     Constants.configuration_file_location = sys.argv[1]
