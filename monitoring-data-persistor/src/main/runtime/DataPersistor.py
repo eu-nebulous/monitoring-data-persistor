@@ -152,7 +152,6 @@ def load_properties(configuration_file_location):
         Constants.broker_password = get_config_value("broker_password")
         Constants.monitoring_broker_topic = get_config_value("monitoring_broker_topic")
         Constants.influxdb_hostname = get_config_value("influxdb_hostname")
-        Constants.influxdb_password = get_config_value("influxdb_password")
         Constants.influxdb_username = get_config_value("influxdb_username")
         Constants.influxdb_token = get_config_value("influxdb_token")
         Constants.influxdb_organization_name = get_config_value("influxdb_organization_name")
