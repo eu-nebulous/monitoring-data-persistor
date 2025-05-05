@@ -7,7 +7,7 @@ from .manager import Manager
 
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.WARNING)
+_logger.setLevel(logging.DEBUG)
 
 class Context:
 
@@ -23,7 +23,6 @@ class Context:
 
     def start(self, manager:Manager, handler):
         self._manager = manager
-
         def on_ready():
             _logger.debug("[context] on_ready" )
             for key,publisher in self.publishers.items():
@@ -39,9 +38,9 @@ class Context:
 
     def stop(self):
         if self._manager is not None and self._manager.started:
-            for key,publisher in self.publishers.items():
+            for key,publisher in self.publishers:
                 publisher._link.close()
-            for key,consumer in self.consumers.items():
+            for key,consumer in self.consumers:
                 consumer._link.close()
 
             self._manager.close()
