@@ -4,7 +4,7 @@ import threading
 from time import sleep
 import os
 from jproperties import Properties
-
+from proton import Message
 from influxdb_client import Point, WritePrecision
 
 import exn
@@ -29,7 +29,7 @@ class ConsumerHandler(Handler):
         self.application_name = application_name
         self.influx_connector = InfluxDBConnector()
         
-    def on_message(self, key, address, body, context):
+def on_message(self, key, address, body, message: Message, context):
         logging.info(f"Received {key} => {address}")
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
@@ -56,8 +56,7 @@ class GenericConsumerHandler(Handler):
         pass
         #if self.connector_thread is not None:
             #self.initialized_connector.stop()
-    def on_message(self, key, address, body, context):
-
+def on_message(self, key, address, body, message: Message, context):
         if (str(address)).startswith(Constants.monitoring_prefix+Constants.metric_list_topic):
             need_to_restart_connector = False
             application_name = body["name"]
