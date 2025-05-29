@@ -30,6 +30,8 @@ class ConsumerHandler(Handler):
         self.influx_connector = InfluxDBConnector()
         
 
+
+
     def on_message(self, key, address, body, message: Message, context):
         logging.info(f"Received {key} => {address}")
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
