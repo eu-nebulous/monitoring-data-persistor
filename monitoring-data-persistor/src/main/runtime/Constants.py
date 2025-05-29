@@ -11,7 +11,6 @@ class Constants:
     broker_username = "admin"
     broker_password = "admin"
     influxdb_username = "my-user"
-    influxdb_password = "my-password"
     monitoring_broker_topic = "eu.nebulouscloud.monitoring"
     influxdb_organization_name = "my-org"
     influxdb_organization_id = "e0033247dcca0c54"
