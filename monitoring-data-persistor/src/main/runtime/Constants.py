@@ -13,7 +13,7 @@ class Constants:
     influxdb_username = "my-user"
     monitoring_broker_topic = "eu.nebulouscloud.monitoring"
     influxdb_organization_name = "my-org"
-    influxdb_organization_id = "e0033247dcca0c54"
+    influxdb_organization_id = "99342dc8aee6db92"
     influxdb_token = "my-super-secret-auth-token"
     influxdb_hostname = "nebulous-influxdb"
     influxdb_port = "8086"

@@ -29,15 +29,24 @@ class ConsumerHandler(Handler):
         self.application_name = application_name
         self.influx_connector = InfluxDBConnector()
         
-
     def on_message(self, key, address, body, message: Message, context):
         logging.info(f"Received {key} => {address}")
         if ((str(address)).startswith(Constants.monitoring_prefix) and not (str(address)).endswith(Constants.metric_list_topic)):
             logging.info("New monitoring data arrived at topic "+address)
             logging.info(body)
             if ((str(address).split(".")[-2]) == "realtime"):
-                point = Point(str(address).split(".")[-1]).field("metricValue",body["metricValue"]).tag("level",body["level"]).tag("application_name",self.application_name)
+                point = Point(str(address).split(".")[-1]) \
+                    .field("metricValue",body["metricValue"]) \
+                    .tag("level",body["level"]) \
+                    .tag("application_name",self.application_name)
                 point.time(body["timestamp"],write_precision=WritePrecision.MS)
+
+                # Add remaining body pairs as tags
+                excluded_keys = {"metricValue", "level", "timestamp"}
+                for key, value in body.items():
+                    if key not in excluded_keys:
+                        point.tag(str(key), str(value))
+
                 logging.info("Writing new real-time monitoring data to Influx DB")
                 self.influx_connector.write_data(point,self.application_name)
             elif ((str(address).split(".")[-2]) == "predicted"):
